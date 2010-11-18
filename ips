@@ -65,7 +65,7 @@ sub parse_raw_html($)
                       $DEBUG && print "DOIT=1, doing it for real\n";
                       rename $newfile, $parsedfile or die "can't rename $newfile to $parsedfile: $!";
                 } else {
-                      print "(not commiting changes, call with 'DOIT' parameter to really do it)\n";
+                      print "  (not commiting changes, call with 'DOIT' parameter to really do it)\n";
                 }
          }
                                                            
