@@ -13,7 +13,7 @@ my $AGENT_ID='check_ips/0.1 ';
 # no user serviceable parts below
 #
 
-use HTML::TableExtract qw(tree);
+use HTML::TableExtract;
 use LWP::UserAgent;
 use Data::Dumper qw(Dumper);
 
@@ -26,7 +26,7 @@ sub parse_raw_html($)
          my ($TRACKID) = @_;
          
  my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
- my $te = HTML::TableExtract->new( headers => [ 'Event Type' ] );	# match table with this specific attributes
+ my $te = HTML::TableExtract->new( headers => [ 'Local Date and Time', 'Country', 'Location', 'Event Type', 'Extra Information' ] );	# match table with this specific attributes
  $te->parse_file($rawfile);
  my $table = $te->first_table_found;
 # my $table_tree = $table->tree;
@@ -40,14 +40,12 @@ sub parse_raw_html($)
 # print "xxxX:" . Dumper ($g);
 # $te->tables_dump();
 # print $table->hrow();
-# print "table has " . $table->rows() . " rows\n";
-my $ts=$table;
-#        foreach my  $ts ($te->tables) {
-          print "Table with xxx found at ", join(',', $ts->coords), ":\n";
-          foreach my $row ($ts->rows) {
-             print "   ", join(',', @$row), "\n";
-          }
-#        }
+ my $ts=$table;
+ print "Table with xxx found at ", join(',', $ts->coords), ":\n";
+ foreach my $row ($ts->rows) {
+#    print "xXx " . Dumper ($row);
+    print "    x ", join(',', @$row), "\n";
+ }
                                                            
 }
 
