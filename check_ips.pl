@@ -26,19 +26,29 @@ sub parse_raw_html($)
          my ($TRACKID) = @_;
          
  my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
- my $te = HTML::TableExtract->new( attribs => { width => '95%' } );	# match table with this specific attributes
+ my $te = HTML::TableExtract->new( headers => [ 'Event Type' ] );	# match table with this specific attributes
  $te->parse_file($rawfile);
  my $table = $te->first_table_found;
- my $table_tree = $table->tree;
+# my $table_tree = $table->tree;
 # $table_tree->cell(4,4)->replace_content('Golden Goose');
- my $table_html = $table_tree->as_HTML;
- my $table_text = $table_tree->as_text;
- my $document_tree = $te->tree;
- my $document_html = $document_tree->as_HTML;
+# my $table_html = $table_tree->as_HTML;
+# my $table_text = $table_tree->as_text;
+# my $document_tree = $te->tree;
+# my $document_html = $document_tree->as_HTML;
 
- my $g = $table->row(0);
- print "xxxX:" . Dumper ($g);
+# my $g = $table->row(0);
+# print "xxxX:" . Dumper ($g);
+# $te->tables_dump();
+# print $table->hrow();
 # print "table has " . $table->rows() . " rows\n";
+my $ts=$table;
+#        foreach my  $ts ($te->tables) {
+          print "Table with xxx found at ", join(',', $ts->coords), ":\n";
+          foreach my $row ($ts->rows) {
+             print "   ", join(',', @$row), "\n";
+          }
+#        }
+                                                           
 }
 
 # gets raw HTML for package, and calls parse_raw_html() to parse it
@@ -73,5 +83,5 @@ sub request_package_status($)
  
 
 request_package_status ('RB116484508HK');
-#request_package_status ('RT073116092HK');
+request_package_status ('RT073116092HK');
 #request_package_status ('RT071604146HK');
