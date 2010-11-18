@@ -19,6 +19,8 @@ use HTML::TableExtract;
 use LWP::UserAgent;
 use Data::Dumper qw(Dumper);
 
+my $doit = 0;
+
 my $ua = LWP::UserAgent->new;
 $ua->agent($AGENT_ID);
 
@@ -56,7 +58,12 @@ sub parse_raw_html($)
          if ($diff) {
                 print "\n*** Changes found for tracked package# $TRACKID\n";
                 print "$diff";
-#                rename $newfile, $parsedfile or die "can't rename $newfile to $parsedfile: $!";
+                if ($doit) {
+                      $DEBUG && print "DOIT=1, doing it for real\n";
+                      rename $newfile, $parsedfile or die "can't rename $newfile to $parsedfile: $!";
+                } else {
+                      print "(not commiting changes, call with 'DOIT' parameter to really do it)\n";
+                }
          }
                                                            
 }
@@ -93,7 +100,35 @@ sub request_package_status($)
 
 ############### MAIN loop ################
  
+my $arg = $ARGV[0];
+if (defined($arg)) {
+         if ($arg eq 'DOIT') { 
+                $doit=1;
+         } elsif ($arg =~ /^([A-Z0-9]{13})$/) {
+                $arg=$1;
+                print "Adding $arg to the tracking database.\n";
+                my $touchfile = "${SPOOL_DIR}/${arg}.txt";
+                if (-f $touchfile) {
+                      print "  $touchfile already exists.\n";
+                } else {
+                      system 'touch', $touchfile;
+                }
+                exit 0;
+         } else {
+                die "invalid argument $arg. Usage: $0 [DOIT | EA123456789HR ]";
+         }
+} 
 
-request_package_status ('RB116484508HK');
-request_package_status ('RT073116092HK');
-#request_package_status ('RT071604146HK');
+# find all tracked files
+opendir DIR, $SPOOL_DIR or die "can't opendir $SPOOL_DIR: $!";
+my @files = grep { -f "$SPOOL_DIR/$_" } readdir(DIR);
+closedir DIR;
+
+foreach my $t (@files) {
+    if ($t =~ /^([A-Z0-9]{13})\.txt$/) {
+          $t = $1;
+          request_package_status($t);
+    }
+}
+
+exit 0;
