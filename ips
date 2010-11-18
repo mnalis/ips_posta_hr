@@ -1,6 +1,6 @@
 #!/usr/bin/perl -wT
 # Matija Nalis <mnalis-perl@voyager.hr> 2010-11-18, GPLv3+
-# prints any changes to packages status
+# prints any changes to packages status on ips.posta.hr
 
 use strict;
 
@@ -38,14 +38,17 @@ sub parse_raw_html($)
 
          $DEBUG && print "Table  found at ", join(',', $table->coords), ":\n";
          open TXT, '>', $newfile or die "can't create $newfile: $!";
+         my $parsed_ok=0;
          foreach my $row ($table->rows) {
                 no warnings;
                 my $line = join(',', @$row);
                 use warnings;
                 $DEBUG && print "    x $line\n";
                 print TXT "$line\n" or die "can't write to $newfile: $!";
+                $parsed_ok++ if $line =~ m,^\d+/\d+/\d+ \d+:\d+:\d+,;
          }
          close (TXT) or die "can't write-close $newfile: $!";
+         print "WARNING: parser looks invalid for $newfile\n" unless $parsed_ok;
 
          my $diff = undef;
          if (-r $parsedfile) {
