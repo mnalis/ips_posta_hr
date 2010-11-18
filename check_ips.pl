@@ -4,9 +4,11 @@
 
 use strict;
 
-my $DEBUG=1;
+my $DEBUG=0;
 my $SPOOL_DIR='/var/local/ips_posta_hr';
 my $AGENT_ID='check_ips/0.1 ';
+
+$ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
 
 #
@@ -25,27 +27,37 @@ sub parse_raw_html($)
 {
          my ($TRACKID) = @_;
          
- my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
- my $te = HTML::TableExtract->new( headers => [ 'Local Date and Time', 'Country', 'Location', 'Event Type', 'Extra Information' ] );	# match table with this specific attributes
- $te->parse_file($rawfile);
- my $table = $te->first_table_found;
-# my $table_tree = $table->tree;
-# $table_tree->cell(4,4)->replace_content('Golden Goose');
-# my $table_html = $table_tree->as_HTML;
-# my $table_text = $table_tree->as_text;
-# my $document_tree = $te->tree;
-# my $document_html = $document_tree->as_HTML;
+         my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
+         my $parsedfile = "${SPOOL_DIR}/$TRACKID.txt";
+         my $newfile = "${parsedfile}.new";
+         my $te = HTML::TableExtract->new( headers => [ 'Local Date and Time', 'Country', 'Location', 'Event Type', 'Extra Information' ] );	# match table with this specific headers
+         $te->parse_file($rawfile);
+         my $table = $te->first_table_found;
 
-# my $g = $table->row(0);
-# print "xxxX:" . Dumper ($g);
-# $te->tables_dump();
-# print $table->hrow();
- my $ts=$table;
- print "Table with xxx found at ", join(',', $ts->coords), ":\n";
- foreach my $row ($ts->rows) {
-#    print "xXx " . Dumper ($row);
-    print "    x ", join(',', @$row), "\n";
- }
+         $DEBUG && print "Table  found at ", join(',', $table->coords), ":\n";
+         open TXT, '>', $newfile or die "can't create $newfile: $!";
+         foreach my $row ($table->rows) {
+                no warnings;
+                my $line = join(',', @$row);
+                use warnings;
+                $DEBUG && print "    x $line\n";
+                print TXT "$line\n" or die "can't write to $newfile: $!";
+         }
+         close (TXT) or die "can't write-close $newfile: $!";
+
+         my $diff = undef;
+         if (-r $parsedfile) {
+                $DEBUG && print "Found $parsedfile, diff to $newfile\n";
+                $diff = `diff $parsedfile $newfile | egrep '^[<>]'`;
+         } else {
+                $DEBUG && print "No $parsedfile, diff /dev/null to $newfile\n";
+                $diff = `diff /dev/null $newfile | egrep '^[<>]'`;
+         }
+         if ($diff) {
+                print "\n*** Changes found for tracked package# $TRACKID\n";
+                print "$diff";
+#                rename $newfile, $parsedfile or die "can't rename $newfile to $parsedfile: $!";
+         }
                                                            
 }
 
@@ -54,9 +66,10 @@ sub request_package_status($)
 {
          my ($TRACKID) = @_;
          
-         $DEBUG && print "Requesting package with tracking# $TRACKID\n";
+         $DEBUG && print "\nRequesting package with tracking# $TRACKID\n";
          my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
-         open RAW, '>', $rawfile or die "can't write to $rawfile: $!";
+         my $tmpfile = "${rawfile}.tmp";
+         open RAW, '>', $tmpfile or die "can't write to $tmpfile: $!";
          
          # Create a request
          my $req = HTTP::Request->new(GET => "http://ips.posta.hr/IPSWeb_item_events.asp?itemid=$TRACKID");
@@ -69,6 +82,7 @@ sub request_package_status($)
              print "CONTENT: " . $res->content if $DEBUG > 2;
              print RAW $res->content;
              close RAW;
+             rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
              parse_raw_html($TRACKID);
          }
          else {
