@@ -4,7 +4,7 @@
 
 use strict;
 
-my $DEBUG=0;
+my $DEBUG=$ENV{'DEBUG'} || 0;
 my $SPOOL_DIR='/var/local/ips_posta_hr';
 my $AGENT_ID='check_ips/0.1 ';
 
