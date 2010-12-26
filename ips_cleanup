@@ -5,3 +5,43 @@
 #
 
 use strict;
+
+my $AGE=14;	# last update must be at lease this many days old 
+my $DEBUG=$ENV{'DEBUG'} || 1;
+my $SPOOL_DIR='/var/local/ips_posta_hr';	# must be same as in bin/ips !
+
+# find all tracked files
+opendir DIR, $SPOOL_DIR or die "can't opendir $SPOOL_DIR: $!";
+my @files = grep { -f "$SPOOL_DIR/$_" } readdir(DIR);
+closedir DIR;
+
+foreach my $t (@files) {
+    if ($t =~ /^([A-Z0-9]{13})\.txt$/) {
+          $t = $1;
+          print "found tracking number $t in spool\n" if $DEBUG > 1;
+          my $parsed_file = "${SPOOL_DIR}/${t}.txt";
+          my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size, $atime,$mtime,$ctime,$blksize,$blocks) = stat($parsed_file);
+          my $diff = int((time()-$mtime)/24/60/60);	# time difference in days
+          if ($diff > $AGE) {
+            print "  it is old enough ($diff > $AGE days)\n" if $DEBUG > 1;
+            open (T, '<', $parsed_file) or die "can't open $parsed_file: $!";
+            my $delivered=0;
+            while (<T>) {
+              if (/Zagreb\s*,\s*Deliver\s*item/i) {
+                $delivered=1;
+                print "    and it has been delivered: $_" if $DEBUG > 2;
+                last; 
+              }
+            }
+            close (T);
+            if ($delivered) {	# remove old & delivered packages
+                my $cnt = unlink "${SPOOL_DIR}/${t}.txt", "${SPOOL_DIR}/${t}.txt.new", "${SPOOL_DIR}/${t}.raw";
+                print "* Removed $cnt files for tracking number $t\n" if $DEBUG > 0;
+            }
+          } else {
+            print "  it is still too young ($diff < $AGE days)\n" if $DEBUG > 1;
+          }
+    }
+}
+
+exit 0;
