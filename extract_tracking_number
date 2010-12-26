@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #
-# extract tracking number from e-mail, and invoke "ips" to add it to
-# tracking database
+# extract tracking number from e-mail, and invoke "ips" to add it to tracking database
+# Started by Matija Nalis <mnalis-perl@voyager.hr> 2010-12-26, GPLv3+
 #
 
 use strict;
