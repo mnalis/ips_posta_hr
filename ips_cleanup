@@ -1,0 +1,7 @@
+#!/usr/bin/perl -w
+#
+# cleanups stale (finished) tracking numbers after some time
+# Started by Matija Nalis <mnalis-perl@voyager.hr> 2010-12-26, GPLv3+
+#
+
+use strict;
