@@ -1,0 +1,43 @@
+#!/usr/bin/perl -w
+#
+# extract tracking number from e-mail, and invoke "ips" to add it to
+# tracking database
+#
+
+use strict;
+use MIME::Base64;
+
+my $DEBUG = 0;
+
+my %found=();
+my $full_decoded='';
+
+# checks if given line contains tracking number
+# example tracking numbers: EA123456789HR, RT072868630HK
+sub check_tracking($) {	
+	my ($line) = @_;
+	if ($line =~ /\b([A-Z]{2}\d{9}[A-Z]{2})\b/) {
+		my $tracking=$1;
+		print "Found Tracking# $tracking\n" if $DEBUG > 1;
+		$found{$tracking}++;
+		return $tracking;
+	}
+	return undef;
+}
+
+while (<STDIN>) {
+	print "line   : $_" if $DEBUG > 2;
+	check_tracking ($_);
+	if (m!^([A-Za-z0-9+/=]{1,76})\s*$!) {	# detected Base64
+		$full_decoded .= decode_base64($1);
+	}
+}
+
+check_tracking($full_decoded) if $full_decoded;	# if it was base64 MIME e-mail...
+
+foreach my $tn (keys %found) {
+	print "Found key: $tn -- $found{$tn} times\n" if $DEBUG > 0;
+	system 'ips', $tn;
+}
+
+exit 0;
