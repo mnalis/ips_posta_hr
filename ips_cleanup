@@ -38,7 +38,8 @@ foreach my $t (@files) {
                 my $out = `cat ${SPOOL_DIR}/${t}.txt`;
                 $out =~ s/^/    /gm;
                 my $cnt = unlink "${SPOOL_DIR}/${t}.txt", "${SPOOL_DIR}/${t}.txt.new", "${SPOOL_DIR}/${t}.raw";
-                print "* Removed $cnt files for tracking number $t\n$out\n\n" if $DEBUG > 0;
+                print "* Removed $cnt files for tracking number $t\n" if $DEBUG > 0;
+                print "$out\n\n" if $DEBUG > 1;
             }
           } else {
             print "  it is still too young ($diff < $AGE days)\n" if $DEBUG > 1;
