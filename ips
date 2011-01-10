@@ -34,7 +34,7 @@ sub parse_raw_html($)
          my $newfile = "${parsedfile}.new";
          my $te = HTML::TableExtract->new( headers => [ 'Local Date and Time', 'Country', 'Location', 'Event Type', 'Extra Information' ] );	# match table with this specific headers
          $te->parse_file($rawfile);
-         my $table = $te->first_table_found;
+         my $table = $te->first_table_found or return "Can't parse table for package# $TRACKID";
 
          $DEBUG && print "Table  found at ", join(',', $table->coords), ":\n";
          open TXT, '>', $newfile or die "can't create $newfile: $!";
@@ -68,7 +68,7 @@ sub parse_raw_html($)
                       print "  (not commiting changes, call with 'DOIT' parameter to really do it)\n";
                 }
          }
-                                                           
+         return undef;
 }
 
 # gets raw HTML for package, and calls parse_raw_html() to parse it
@@ -93,7 +93,8 @@ sub request_package_status($)
              print RAW $res->content;
              close RAW;
              rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
-             parse_raw_html($TRACKID);
+             my $htmlres = parse_raw_html($TRACKID);
+             print "*** ERROR: $htmlres\n" if $htmlres;
          }
          else {
              print "HTTP REQUEST FOR TRACKING# $TRACKID failed with ", $res->status_line, "\n";
