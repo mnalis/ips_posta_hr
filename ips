@@ -94,7 +94,7 @@ sub request_package_status($)
              close RAW;
              rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
              my $htmlres = parse_raw_html($TRACKID);
-             print "*** ERROR: $htmlres\n" if $htmlres;
+             print "*** ERROR: $htmlres\n" if $htmlres and $DEBUG;
          }
          else {
              print "HTTP REQUEST FOR TRACKING# $TRACKID failed with ", $res->status_line, "\n";
