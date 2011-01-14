@@ -12,16 +12,18 @@ my $DEBUG = 0;
 my %found=();
 my $full_decoded='';
 
+sub found_tracking($) {
+	my ($tracking) = @_;
+	print "Found Tracking# $tracking\n" if $DEBUG > 1;
+	$found{$tracking}++;
+	return '';
+}
+
 # checks if given line contains tracking number
-# example tracking numbers: EA123456789HR, RT072868630HK
+# example tracking numbers: EA123456789HR, RT072868631HK, RA004359364CN
 sub check_tracking($) {	
 	my ($line) = @_;
-	if ($line =~ /\b([A-Z]{2}\d{9}[A-Z]{2})\b/) {
-		my $tracking=$1;
-		print "Found Tracking# $tracking\n" if $DEBUG > 1;
-		$found{$tracking}++;
-		return $tracking;
-	}
+	$line =~ s/\b([A-Z]{2}\d{9}[A-Z]{2})\b/found_tracking($1)/ge;
 	return undef;
 }
 
