@@ -27,7 +27,7 @@ foreach my $t (@files) {
             open (T, '<', $parsed_file) or die "can't open $parsed_file: $!";
             my $delivered=0;
             while (<T>) {
-              if (/Zagreb\s*,\s*Deliver\s*item/i) {
+              if (/Zagreb\s*,\s*Deliver\s*item/i) {		# NB FIXME - hardcoded Zagreb
                 $delivered=1;
                 print "    and it has been delivered: $_" if $DEBUG > 2;
                 last; 
@@ -37,7 +37,7 @@ foreach my $t (@files) {
             if ($delivered) {	# remove old & delivered packages
                 my $out = `cat ${SPOOL_DIR}/${t}.txt`;
                 $out =~ s/^/    /gm;
-                my $cnt = unlink "${SPOOL_DIR}/${t}.txt", "${SPOOL_DIR}/${t}.txt.new", "${SPOOL_DIR}/${t}.raw";
+                my $cnt = unlink "${SPOOL_DIR}/${t}.txt", "${SPOOL_DIR}/${t}.txt.new", "${SPOOL_DIR}/${t}.raw", "${SPOOL_DIR}/${t}.desc";
                 print "* Removed $cnt files for tracking number $t\n" if $DEBUG > 0;
                 print "$out\n\n" if $DEBUG > 1;
             }

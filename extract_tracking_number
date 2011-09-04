@@ -5,6 +5,7 @@
 #
 
 use strict;
+
 use MIME::Base64;
 
 my $DEBUG = 0;
@@ -27,8 +28,17 @@ sub check_tracking($) {
 	return undef;
 }
 
+my $header = 1;
+my $sender = '';
 while (<STDIN>) {
 	print "line   : $_" if $DEBUG > 2;
+	if ($header and !$sender) {
+		$header = 0 if /^\s*$/;		# detect end of headers
+		if (/^From: .*<(.+?)>/) {
+			$sender = $1;
+			print "Found sender: <$sender>\n" if $DEBUG > 1;
+		}
+	}
 	check_tracking ($_);
 	if (m!^([A-Za-z0-9+/=]{1,76})\s*$!) {	# detected Base64
 		$full_decoded .= decode_base64($1);
@@ -38,8 +48,8 @@ while (<STDIN>) {
 check_tracking($full_decoded) if $full_decoded;	# if it was base64 MIME e-mail...
 
 foreach my $tn (keys %found) {
-	print "Found key: $tn -- $found{$tn} times\n" if $DEBUG > 0;
-	system 'ips', $tn;
+	print "Found key: $tn -- $found{$tn} times (sender: $sender)\n" if $DEBUG > 0;
+	system 'ips', $tn, '', $sender;
 }
 
 exit 0;

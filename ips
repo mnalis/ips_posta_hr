@@ -6,7 +6,7 @@ use strict;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $SPOOL_DIR='/var/local/ips_posta_hr';
-my $AGENT_ID='check_ips/0.1 ';
+my $AGENT_ID='check_ips/0.2 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
@@ -20,9 +20,50 @@ use LWP::UserAgent;
 use Data::Dumper qw(Dumper);
 
 my $doit = 0;
+my $changes = 0;
 
 my $ua = LWP::UserAgent->new;
 $ua->agent($AGENT_ID);
+
+# parses HTML file on disk
+sub get_metadata($)
+{
+         my ($trackid) = @_;
+         
+         my %meta = ();
+         my $descfile = "${SPOOL_DIR}/${trackid}.desc";
+         if (open DESC, '<', $descfile) {
+              while (<DESC>) {
+                   chomp;
+                   my ($key, $value) = split /\s*=\s*/, $_, 2;
+                   $meta{$key}=$value;
+                   print "  reading metadata meta{$key}=$value\n" if $DEBUG > 2;
+              }
+              close DESC;
+         } else {
+              print "(no previous metadata exists)\n" if $DEBUG > 1;
+         }
+         return \%meta;
+}
+
+# returns formated description, sender etc.
+sub get_pretty_metadata($)
+{
+        my ($trackid) = @_;
+        my $meta = get_metadata($trackid);
+        my $pretty = "$trackid";
+        
+        # simplify email to just important domain name
+        $$meta{'sender'} =~ s/^.*\@(.+?)\.(com|net|org|cn)$/$1/;
+        
+        $pretty .= " <$$meta{'sender'}>" if $$meta{'sender'};
+        $pretty .= " [$$meta{'desc'}]" if $$meta{'desc'};
+        
+        #$pretty .= "\t";
+        $pretty = sprintf ("%-60s", $pretty);	# NB: hardcoded formating column, change depending on your display device, or use "\t" above
+
+        return $pretty;
+}
 
 # parses HTML file on disk
 sub parse_raw_html($)
@@ -59,7 +100,8 @@ sub parse_raw_html($)
                 $diff = `diff /dev/null $newfile | egrep '^[<>]'`;
          }
          if ($diff) {
-                print "\n*** Changes found for tracked package# $TRACKID\n";
+                print "\n*** Changes found for tracked package# " . get_pretty_metadata($TRACKID) . "\n";
+                $changes++;
                 print "$diff";
                 if ($doit) {
                       $DEBUG && print "DOIT=1, doing it for real\n";
@@ -101,25 +143,77 @@ sub request_package_status($)
          }
 }
 
+# outputs oneline last status of package
+sub print_last_status($)
+{
+         my ($TRACKID) = @_;
+         my $output = '';
+         my $delivered = 0;
+         
+         my $parsedfile = "${SPOOL_DIR}/${TRACKID}.txt";
+         open PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
+         while (<PARSED>) {
+               chomp;
+               if (/Zagreb\s*,\s*Deliver\s*item/i) { $delivered=1 }	# NB FIXME: hardcoded Zagreb
+               $output = $_ if $_;
+          }
+         close PARSED;
+         
+         print ' ' . ($delivered?'+ ':'- ') . get_pretty_metadata($TRACKID) . ' ' . ($output?$output:'(nothing yet)') . "\n";
+}
 
-############### MAIN loop ################
+# add new order to tracker (with optional metadata)
+sub track_new_order ($$$)
+{
+         my ($trackid, $desc, $sender) = @_;
+         print "Adding $trackid to the tracking database";
+         print " (with desc=$desc)" if $desc;
+         print " (with sender=$sender)" if $sender;
+         print ".\n";
+         my $touchfile = "${SPOOL_DIR}/${trackid}.txt";
+         if (-f $touchfile) {
+               print "  $touchfile already exists.\n";
+         } else {
+               system 'touch', $touchfile;
+         }
+         
+         if ($desc or $sender) {		# is there extra metadata to update?
+               # read in previous metadata (if exists)
+               my $meta = get_metadata($trackid); my %meta=%$meta;
+               
+               # add/update description
+               $meta{'desc'} = $desc if $desc;
+               # add/update sender
+               $meta{'sender'} = $sender if $sender;
+               
+               # some extra metadata 
+               $meta{'lastupdate'} = localtime() . " by $AGENT_ID";
+               
+               # write back metadata
+               my $descfile = "${SPOOL_DIR}/${trackid}.desc";
+               my $tmpfile = $descfile . '.tmp';
+               open DESC, '>',  $tmpfile or die "can't write to $tmpfile: $!";
+               foreach my $key (keys %meta) {
+                    print DESC "$key=$meta{$key}\n" or die "can't append to $tmpfile: $!";
+               }
+               close DESC or die "can't close $tmpfile: $!";
+               rename $tmpfile, $descfile or die "can't rename $tmpfile to $descfile: $!";
+         }
+}
+
+##########################################
+###             MAIN loop              ###
+##########################################
  
 my $arg = $ARGV[0];
 if (defined($arg)) {
          if ($arg eq 'DOIT') { 
                 $doit=1;
-         } elsif ($arg =~ /^([A-Z0-9]{13})$/) {
-                $arg=$1;
-                print "Adding $arg to the tracking database.\n";
-                my $touchfile = "${SPOOL_DIR}/${arg}.txt";
-                if (-f $touchfile) {
-                      print "  $touchfile already exists.\n";
-                } else {
-                      system 'touch', $touchfile;
-                }
+         } elsif ($arg =~ /^([A-Z]{2}\d{9}[A-Z]{2})$/) {
+                track_new_order ($1, $ARGV[1], $ARGV[2]);
                 exit 0;
          } else {
-                die "invalid argument $arg. Usage: $0 [DOIT | EA123456789HR ]";
+                die "invalid argument $arg. Usage: $0 [DOIT | EA123456789HR [optional_description] [optional_sender] ]";
          }
 } 
 
@@ -130,9 +224,18 @@ closedir DIR;
 
 foreach my $t (@files) {
     if ($t =~ /^([A-Z0-9]{13})\.txt$/) {
-          $t = $1;
-          request_package_status($t);
+          request_package_status($1);
     }
+}
+
+# if we outputed anything (if there were any changes), show last status of all packages
+if (!$doit or $changes) {
+  print "\nThere have been changes to $changes packages. Last state of each package is:\n";
+  foreach my $t (sort @files) {
+      if ($t =~ /^([A-Z0-9]{13})\.txt$/) {
+            print_last_status($1);
+      }
+  }
 }
 
 exit 0;
