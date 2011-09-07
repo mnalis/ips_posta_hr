@@ -1,12 +1,12 @@
 #!/usr/bin/perl -wT
-# Matija Nalis <mnalis-perl@voyager.hr> 2010-11-18, GPLv3+
+# Matija Nalis <mnalis-perl@voyager.hr> started 2010-11-18, GPLv3+
 # prints any changes to packages status on ips.posta.hr
 
 use strict;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $SPOOL_DIR='/var/local/ips_posta_hr';
-my $AGENT_ID='check_ips/0.2 ';
+my $AGENT_ID='check_ips/0.21 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
@@ -54,7 +54,7 @@ sub get_pretty_metadata($)
         my $pretty = "$trackid";
         
         # simplify email to just important domain name
-        $$meta{'sender'} =~ s/^.*\@(.+?)\.(com|net|org|cn)$/$1/;
+        $$meta{'sender'} =~ s/^.*\@(.+?)\.(com|net|org|cn)$/$1/ if $$meta{'sender'};
         
         $pretty .= " <$$meta{'sender'}>" if $$meta{'sender'};
         $pretty .= " [$$meta{'desc'}]" if $$meta{'desc'};
