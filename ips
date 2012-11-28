@@ -6,7 +6,7 @@ use strict;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $SPOOL_DIR='/var/local/ips_posta_hr';
-my $AGENT_ID='check_ips/0.21 ';
+my $AGENT_ID='check_ips/0.22 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
@@ -154,7 +154,7 @@ sub print_last_status($)
          open PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
          while (<PARSED>) {
                chomp;
-               if (/Zagreb\s*,\s*Deliver\s*item/i) { $delivered=1 }	# NB FIXME: hardcoded Zagreb
+               if (/Zagreb.*,\s*Deliver\s+item/i) { $delivered=1 }	# NB FIXME: hardcoded Zagreb
                $output = $_ if $_;
           }
          close PARSED;

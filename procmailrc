@@ -1,4 +1,4 @@
-:0 bwc:extract_tracking_number
+:0 wc:extract_tracking_number
 * ^FROM.*dealextreme
 * ^Subject: .*tracking
 | extract_tracking_number
