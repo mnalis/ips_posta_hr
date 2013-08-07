@@ -86,10 +86,10 @@ sub parse_raw_html($)
                 use warnings;
                 $DEBUG && print "    x $line\n";
                 print TXT "$line\n" or die "can't write to $newfile: $!";
-                $parsed_ok++ if $line =~ m,^\d+/\d+/\d+ \d+:\d+:\d+,;
+                $parsed_ok++ if $line =~ m,^\d+.\d+.\d+. \d+:\d+:\d+,;
          }
          close (TXT) or die "can't write-close $newfile: $!";
-         print "WARNING: parser looks invalid for $newfile\n" unless $parsed_ok;
+         print "WARNING: parser looks invalid for $newfile (parsed_ok=$parsed_ok)\n" unless $parsed_ok;
 
          my $diff = undef;
          if (-r $parsedfile) {
