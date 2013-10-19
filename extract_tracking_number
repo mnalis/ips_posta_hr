@@ -29,14 +29,28 @@ sub check_tracking($) {
 }
 
 my $header = 1;
+my $from_continue = 0;
 my $sender = '';
 while (<STDIN>) {
 	print "line   : $_" if $DEBUG > 2;
 	if ($header and !$sender) {
 		$header = 0 if /^\s*$/;		# detect end of headers
-		if (/^From: .*<(.+?)>/) {
-			$sender = $1;
-			print "Found sender: <$sender>\n" if $DEBUG > 1;
+		if ($from_continue) {
+			$from_continue = 0;
+			print "Continuation line is: $_" if $DEBUG > 1;
+			if (/^\s.*?<(.+?)>/) {
+				$sender = $1;
+				print "Found sender(2): <$sender>\n" if $DEBUG > 1;
+			}
+		}
+		if (/^From:\s/) { 
+			if (/^From:\s.*<(.+?)>/) {
+				$sender = $1;
+				print "Found sender: <$sender>\n" if $DEBUG > 1;
+			} else {
+				$from_continue = 1;
+				print "Found From: continuation\n" if $DEBUG > 1;
+			}
 		}
 	}
 	check_tracking ($_);
