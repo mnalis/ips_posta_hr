@@ -5,8 +5,10 @@
 use strict;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
-my $SPOOL_DIR='/var/local/ips_posta_hr';
-my $AGENT_ID='check_ips/0.21 ';
+my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
+if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
+my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
+my $AGENT_ID='check_ips/0.30 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
@@ -86,7 +88,7 @@ sub parse_raw_html($)
                 use warnings;
                 $DEBUG && print "    x $line\n";
                 print TXT "$line\n" or die "can't write to $newfile: $!";
-                $parsed_ok++ if $line =~ m,^\d+/\d+/\d+ \d+:\d+:\d+,;
+                $parsed_ok++ if $line =~ m{^\d+[/\.]\d+[/\.]\d+\.? \d+:\d+:\d+};
          }
          close (TXT) or die "can't write-close $newfile: $!";
          print "WARNING: parser looks invalid for $newfile\n" unless $parsed_ok;
@@ -204,9 +206,16 @@ sub track_new_order ($$$)
 ##########################################
 ###             MAIN loop              ###
 ##########################################
+
+
  
 my $arg = $ARGV[0];
 if (defined($arg)) {
+         if (! -d "$SPOOL_DIR") {
+             print "Warning: $SPOOL_DIR does not exists, creating...\n";
+             mkdir $SPOOL_DIR, 0700 or die "can't create $SPOOL_DIR: $!";
+         }
+
          if ($arg eq 'DOIT') { 
                 $doit=1;
          } elsif ($arg =~ /^([A-Z]{2}\d{9}[A-Z]{2})$/) {
