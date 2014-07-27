@@ -1,4 +1,4 @@
-:0 bwc:extract_tracking_number
+:0 bhwc:extract_tracking_number
 * ^FROM.*dealextreme
 * ^Subject: .*Shipping
 | extract_tracking_number
