@@ -8,7 +8,9 @@ use strict;
 
 my $AGE=14;	# last update must be at lease this many days old 
 my $DEBUG=$ENV{'DEBUG'} || 1;
-my $SPOOL_DIR='/var/local/ips_posta_hr';	# must be same as in bin/ips !
+my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
+if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
+my $SPOOL_DIR=$HOME . '/.ips_posta_hr';		# must be same as in bin/ips !
 
 # find all tracked files
 opendir DIR, $SPOOL_DIR or die "can't opendir $SPOOL_DIR: $!";
