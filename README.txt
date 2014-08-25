@@ -18,8 +18,9 @@ by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches 
 	(NOTE: grepaj "FIXME" po scriptama prvo ako nisi iz Zagreba)
 	"crontab -e" kao user, pa dodaj redove:
 		0 * * * * /usr/local/bin/ips DOIT
-		40 20 * * * /usr/local/bin/ips_cleanup
+		40 20 * * * /usr/local/bin/ips_cleanup 7
 	
+        ("ips_cleanup 7" ce obrisati posiljke koje su oznacene kao isporucene duze od 7 dana)
 
 3) (opcionalno) set up procmail za automatski tracking
 	wget http://linux.voyager.hr/ips/procmailrc
