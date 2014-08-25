@@ -8,7 +8,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.31 ';
+my $AGENT_ID='check_ips/0.32 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 
@@ -80,6 +80,7 @@ sub parse_raw_html($)
          my $table = $te->first_table_found or return "Can't parse table for package# $TRACKID";
 
          $DEBUG && print "Table  found at ", join(',', $table->coords), ":\n";
+         unlink $newfile;
          open TXT, '>', $newfile or die "can't create $newfile: $!";
          my $parsed_ok=0;
          foreach my $row ($table->rows) {
