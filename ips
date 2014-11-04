@@ -11,7 +11,7 @@ my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
 my $AGENT_ID='check_ips/0.32 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
-
+umask 002;
 
 #
 # no user serviceable parts below

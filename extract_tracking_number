@@ -13,6 +13,8 @@ my $DEBUG = 0;
 my %found=();
 my $full_decoded='';
 
+umask 002;
+
 sub found_tracking($) {
 	my ($tracking) = @_;
 	print "Found Tracking# $tracking\n" if $DEBUG > 1;
