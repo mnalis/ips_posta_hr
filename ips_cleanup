@@ -31,7 +31,7 @@ foreach my $t (@files) {
             open (T, '<', $parsed_file) or die "can't open $parsed_file: $!";
             my $delivered=0;
             while (<T>) {
-              if (/Zagreb\s*\w*\s*,\s*Deliver\s*item/i) {		# NB FIXME - hardcoded Zagreb
+              if (/Zagreb.*,\s*Deliver\s+item/i) {		# NB FIXME - hardcoded Zagreb
                 $delivered=1;
                 print "    and it has been delivered: $_" if $DEBUG > 2;
                 last; 
