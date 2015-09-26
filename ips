@@ -219,7 +219,7 @@ if (defined($arg)) {
 
          if ($arg eq 'DOIT') { 
                 $doit=1;
-         } elsif ($arg =~ /^([A-Z]{2}\d{9}[A-Z]{2})$/) {
+         } elsif ($arg =~ /^([A-Z]{2}[A-Z0-9]\d{8}[A-Z]{2})$/) {
                 track_new_order ($1, $ARGV[1], $ARGV[2]);
                 exit 0;
          } else {

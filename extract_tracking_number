@@ -26,7 +26,7 @@ sub found_tracking($) {
 # example tracking numbers: EA123456789HR, RT072868631HK, RA004359364CN
 sub check_tracking($) {	
 	my ($line) = @_;
-	$line =~ s/\b([A-Z]{2}\d{9}[A-Z]{2})\b/found_tracking($1)/ge;
+	$line =~ s/\b([A-Z]{2}[A-Z0-9]\d{8}[A-Z]{2})\b/found_tracking($1)/ge;
 	return undef;
 }
 
