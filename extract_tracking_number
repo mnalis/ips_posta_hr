@@ -8,7 +8,7 @@ use strict;
 
 use MIME::Base64;
 
-my $DEBUG = 0;
+my $DEBUG = $ENV{DEBUG} || 0;
 
 my %found=();
 my $full_decoded='';
