@@ -12,7 +12,6 @@ by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches 
 	mkdir ~/.ips_posta_hr
 
 2) dodaj automatske obavijesti e-mailom i automatsko praznjenje kada posiljke stignu 
-	(NOTE: grepaj "FIXME" po scriptama prvo ako nisi iz Zagreba)
 	"crontab -e" kao user, pa dodaj redove:
 		0 * * * * /usr/local/bin/ips DOIT
 		40 20 * * * /usr/local/bin/ips_cleanup 7
