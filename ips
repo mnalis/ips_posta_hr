@@ -128,7 +128,7 @@ sub request_package_status($)
          open my $RAW, '>', $tmpfile or die "can't write to $tmpfile: $!";
          
          # Create a request
-         my $req = HTTP::Request->new(GET => "http://ips.posta.hr/IPSWeb_item_events.asp?itemid=$TRACKID");
+         my $req = HTTP::Request->new(GET => "https://tnt.posta.hr/hptnt/index.xhtml?tntnumber=$TRACKID");
 
          # Pass request to the user agent and get a response back
          my $res = $ua->request($req);
