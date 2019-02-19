@@ -3,7 +3,6 @@
 # prints any changes to packages status on ips.posta.hr or tnt.posta.ht (2019+)
 
 use strict;
-use autodie;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
@@ -76,7 +75,7 @@ sub parse_raw_html($)
          my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
          my $parsedfile = "${SPOOL_DIR}/$TRACKID.txt";
          my $newfile = "${parsedfile}.new";
-         my $te = HTML::TableExtract->new( headers => [ 'Local Date and Time', 'Country', 'Location', 'Event Type', 'Extra Information' ] );	# match table with this specific headers
+         my $te = HTML::TableExtract->new( headers => [ 'Datum i vrijeme', 'Država', 'Mjesto', 'Opis događaja', 'Napomena' ] );	# match table with this specific headers
          $te->parse_file($rawfile);
          my $table = $te->first_table_found or return "Can't parse table for package# $TRACKID";
 
