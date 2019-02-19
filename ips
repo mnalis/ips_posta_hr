@@ -157,7 +157,10 @@ sub print_last_status($)
          open my $PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
          while (<$PARSED>) {
                chomp;
-               if (/Zagreb.*,\s*Deliver\s+item/i) { $delivered=1 }	# NB FIXME: hardcoded Zagreb
+               if (/Pošiljka uručena primatelju/i) {
+		        print "Package delivery DETECTED\n" if $DEBUG > 0;
+			$delivered=1;
+               }
                $output = $_ if $_;
           }
          close $PARSED;
