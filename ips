@@ -1,14 +1,15 @@
 #!/usr/bin/perl -wT
 # Matija Nalis <mnalis-perl@voyager.hr> started 2010-11-18, GPLv3+
-# prints any changes to packages status on ips.posta.hr
+# prints any changes to packages status on ips.posta.hr or tnt.posta.ht (2019+)
 
 use strict;
+use autodie;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.32 ';
+my $AGENT_ID='check_ips/0.40 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -18,14 +19,17 @@ umask 002;
 #
 
 use HTML::TableExtract;
-use LWP::UserAgent;
+use WWW::Mechanize;
 use Data::Dumper qw(Dumper);
 
 my $doit = 0;
 my $changes = 0;
 
-my $ua = LWP::UserAgent->new;
-$ua->agent($AGENT_ID);
+my $mech = WWW::Mechanize->new(
+        agent => $AGENT_ID, 
+        autocheck => 1, 
+        cookie_jar => {},
+);
 
 # parses HTML file on disk
 sub get_metadata($)
@@ -34,14 +38,14 @@ sub get_metadata($)
          
          my %meta = ();
          my $descfile = "${SPOOL_DIR}/${trackid}.desc";
-         if (open DESC, '<', $descfile) {
-              while (<DESC>) {
+         if (open my $DESC, '<', $descfile) {
+              while (<$DESC>) {
                    chomp;
                    my ($key, $value) = split /\s*=\s*/, $_, 2;
                    $meta{$key}=$value;
                    print "  reading metadata meta{$key}=$value\n" if $DEBUG > 2;
               }
-              close DESC;
+              close $DESC;
          } else {
               print "(no previous metadata exists)\n" if $DEBUG > 1;
          }
@@ -81,17 +85,17 @@ sub parse_raw_html($)
 
          $DEBUG && print "Table  found at ", join(',', $table->coords), ":\n";
          unlink $newfile;
-         open TXT, '>', $newfile or die "can't create $newfile: $!";
+         open my $TXT, '>', $newfile or die "can't create $newfile: $!";
          my $parsed_ok=0;
          foreach my $row ($table->rows) {
                 no warnings;
                 my $line = join(',', @$row);
                 use warnings;
                 $DEBUG && print "    x $line\n";
-                print TXT "$line\n" or die "can't write to $newfile: $!";
+                print $TXT "$line\n" or die "can't write to $newfile: $!";
                 $parsed_ok++ if $line =~ m{^\d+[/\.]\d+[/\.]\d+\.? \d+:\d+:\d+};
          }
-         close (TXT) or die "can't write-close $newfile: $!";
+         close ($TXT) or die "can't write-close $newfile: $!";
          print "WARNING: parser looks invalid for $newfile (parsed_ok=$parsed_ok)\n" unless $parsed_ok;
 
          my $diff = undef;
@@ -124,19 +128,27 @@ sub request_package_status($)
          $DEBUG && print "\nRequesting package with tracking# $TRACKID\n";
          my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
          my $tmpfile = "${rawfile}.tmp";
-         open RAW, '>', $tmpfile or die "can't write to $tmpfile: $!";
+         open my $RAW, '>', $tmpfile or die "can't write to $tmpfile: $!";
          
-         # Create a request
-         my $req = HTTP::Request->new(GET => "http://ips.posta.hr/IPSWeb_item_events.asp?itemid=$TRACKID");
 
+         # Create a request
+         $mech->get ( 'https://tnt.posta.hr/' );
+         
          # Pass request to the user agent and get a response back
-         my $res = $ua->request($req);
+         my $res = $mech->submit_form(
+             strict_forms => 1,
+             form_name => 'tnt_forma',
+             button => 'tnt_forma:j_idt24',
+             fields      => {
+                 'tnt_forma:prmbr'     => $TRACKID,
+             }
+         );
 
          # Check the outcome of the response
          if ($res->is_success) {
              print "CONTENT: " . $res->content if $DEBUG > 2;
-             print RAW $res->content;
-             close RAW;
+             print $RAW $res->content;
+             close $RAW;
              rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
              my $htmlres = parse_raw_html($TRACKID);
              print "*** ERROR: $htmlres\n" if $htmlres and $DEBUG;
@@ -144,6 +156,8 @@ sub request_package_status($)
          else {
              print "HTTP REQUEST FOR TRACKING# $TRACKID failed with ", $res->status_line, "\n";
          }
+         
+         die "/mn/ FIXME";
 }
 
 # outputs oneline last status of package
@@ -154,13 +168,13 @@ sub print_last_status($)
          my $delivered = 0;
          
          my $parsedfile = "${SPOOL_DIR}/${TRACKID}.txt";
-         open PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
-         while (<PARSED>) {
+         open my $PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
+         while (<$PARSED>) {
                chomp;
                if (/Zagreb.*,\s*Deliver\s+item/i) { $delivered=1 }	# NB FIXME: hardcoded Zagreb
                $output = $_ if $_;
           }
-         close PARSED;
+         close $PARSED;
          
          print ' ' . ($delivered?'+ ':'- ') . get_pretty_metadata($TRACKID) . ' ' . ($output?$output:'(nothing yet)') . "\n";
 }
@@ -195,11 +209,11 @@ sub track_new_order ($$$)
                # write back metadata
                my $descfile = "${SPOOL_DIR}/${trackid}.desc";
                my $tmpfile = $descfile . '.tmp';
-               open DESC, '>',  $tmpfile or die "can't write to $tmpfile: $!";
+               open my $DESC, '>',  $tmpfile or die "can't write to $tmpfile: $!";
                foreach my $key (keys %meta) {
-                    print DESC "$key=$meta{$key}\n" or die "can't append to $tmpfile: $!";
+                    print $DESC "$key=$meta{$key}\n" or die "can't append to $tmpfile: $!";
                }
-               close DESC or die "can't close $tmpfile: $!";
+               close $DESC or die "can't close $tmpfile: $!";
                rename $tmpfile, $descfile or die "can't rename $tmpfile to $descfile: $!";
          }
 }
@@ -228,9 +242,9 @@ if (defined($arg)) {
 } 
 
 # find all tracked files
-opendir DIR, $SPOOL_DIR or die "can't opendir $SPOOL_DIR: $!";
-my @files = grep { -f "$SPOOL_DIR/$_" } readdir(DIR);
-closedir DIR;
+opendir my $DIR, $SPOOL_DIR or die "can't opendir $SPOOL_DIR: $!";
+my @files = grep { -f "$SPOOL_DIR/$_" } readdir($DIR);
+closedir $DIR;
 
 foreach my $t (@files) {
     if ($t =~ /^([A-Z0-9]{13})\.txt$/) {

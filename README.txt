@@ -11,7 +11,7 @@ by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches 
 	wget -N http://linux.voyager.hr/ips/ips
 	wget -N http://linux.voyager.hr/ips/ips_cleanup
 	chmod 755 extract_tracking_number ips ips_cleanup
-        apt-get install perl libhtml-tableextract-perl
+        apt-get install perl libhtml-tableextract-perl libwww-mechanize-perl
 	
 
 2) dodaj automatske obavijesti e-mailom i automatsko praznjenje kada posiljke stignu 
