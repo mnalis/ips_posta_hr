@@ -19,9 +19,7 @@ by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches 
         ("ips_cleanup 7" ce obrisati posiljke koje su oznacene kao isporucene duze od 7 dana)
 
 3) (opcionalno) set up procmail za automatski tracking
-	wget http://linux.voyager.hr/ips/procmailrc
-
-	i onda update svoj ~/.procmailrc sa tim i slicnim 
+	i onda update svoj ~/.procmailrc sa ./procmailrc iz git-a i slicnim 
  	(dodati koje mailove da automatski pocinje pratiti)
 
 4) (opcionalno) rucno dodavanje posiljaka za pracenje ili dodatnih informacija
