@@ -1,18 +1,15 @@
-Auto e-mail tracking posiljaka preko ips.posta.hr, kratke upute za instalaciju i koristenje
+Auto e-mail tracking posiljaka preko https://tnt.posta.hr, kratke upute za instalaciju i koristenje
 
 by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches welcome.
 
 
-1) download svih datoteka http://linux.voyager.hr/ips/
-   i potrebnih datoteka
+1) download svih datoteka i potrebnih paketa
 
-	cd /usr/local/bin
-	wget -N http://linux.voyager.hr/ips/extract_tracking_number
-	wget -N http://linux.voyager.hr/ips/ips
-	wget -N http://linux.voyager.hr/ips/ips_cleanup
-	chmod 755 extract_tracking_number ips ips_cleanup
-        apt-get install perl libhtml-tableextract-perl
-	
+	git clone https://github.com/mnalis/ips_posta_hr.git
+	cd ips_posta_hr
+	sudo make install
+        sudo apt-get install perl libhtml-tableextract-perl
+	mkdir ~/.ips_posta_hr
 
 2) dodaj automatske obavijesti e-mailom i automatsko praznjenje kada posiljke stignu 
 	(NOTE: grepaj "FIXME" po scriptama prvo ako nisi iz Zagreba)
