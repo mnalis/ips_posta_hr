@@ -6,3 +6,8 @@ all:
 install:
 	install -o root -g root -m 0755 extract_tracking_number ips ips_cleanup $(DESTDIR)
 
+update:
+	git pull --all
+
+publish:
+	git push --all
