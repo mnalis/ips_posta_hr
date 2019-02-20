@@ -10,4 +10,5 @@ update:
 	git pull --all
 
 publish:
+	git commit -a || true
 	git push --all
