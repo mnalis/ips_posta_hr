@@ -8,7 +8,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.40 ';
+my $AGENT_ID='check_ips/0.41 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -83,16 +83,22 @@ sub parse_raw_html($)
          unlink $newfile;
          open my $TXT, '>', $newfile or die "can't create $newfile: $!";
          my $parsed_ok=0;
+	 my $parsed_nodata=0;
          foreach my $row ($table->rows) {
                 no warnings;
                 my $line = join(',', @$row);
                 use warnings;
                 $DEBUG && print "    x $line\n";
                 print $TXT "$line\n" or die "can't write to $newfile: $!";
+		$parsed_nodata++ if $line =~ m{nema podataka}i;
                 $parsed_ok++ if $line =~ m{^\d+[/\.]\d+[/\.]\d+\.? \d+:\d+:\d+};
          }
          close ($TXT) or die "can't write-close $newfile: $!";
-         print "WARNING: parser looks invalid for $newfile (parsed_ok=$parsed_ok)\n" unless $parsed_ok;
+         if ($parsed_nodata) {
+                 $DEBUG && print "Nema podataka za posiljku $TRACKID\n";
+	 } else {
+	         print "WARNING: parser looks invalid for $newfile (parsed_ok=$parsed_ok)\n" unless $parsed_ok;
+	 }
 
          my $diff = undef;
          if (-r $parsedfile) {
