@@ -8,7 +8,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.41 ';
+my $AGENT_ID='check_ips/0.42 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -130,26 +130,35 @@ sub request_package_status($)
          $DEBUG && print "\nRequesting package with tracking# $TRACKID\n";
          my $rawfile = "${SPOOL_DIR}/$TRACKID.raw";
          my $tmpfile = "${rawfile}.tmp";
-         open my $RAW, '>', $tmpfile or die "can't write to $tmpfile: $!";
+         open my $RAW, '>', $tmpfile or die "can't create $tmpfile: $!";
          
          # Create a request
          my $req = HTTP::Request->new(GET => "https://tnt.posta.hr/hptnt/index.xhtml?tntnumber=$TRACKID");
 
-         # Pass request to the user agent and get a response back
-         my $res = $ua->request($req);
+	 my $MAX_TRIES = 3;
+	 my $try = 0;
+	 my $res;
 
-         # Check the outcome of the response
-         if ($res->is_success) {
-             print "CONTENT: " . $res->content if $DEBUG > 2;
-             print $RAW $res->content;
-             close $RAW;
-             rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
-             my $htmlres = parse_raw_html($TRACKID);
-             print "*** ERROR: $htmlres\n" if $htmlres and $DEBUG;
+	 while ($try++ < $MAX_TRIES) {
+             # Pass request to the user agent and get a response back
+             $res = $ua->request($req);
+
+             # Check the outcome of the response
+             if ($res->is_success) {
+                 print "CONTENT (try#$try/$MAX_TRIES): " . $res->content if $DEBUG > 2;
+                 print $RAW $res->content;
+                 close $RAW;
+                 rename $tmpfile, $rawfile or die "can't rename $tmpfile to $rawfile: $!";
+                 my $htmlres = parse_raw_html($TRACKID);
+                 print "*** ERROR: $htmlres\n" if $htmlres and $DEBUG;
+                 return;
+             }
+             $DEBUG && print "HTTP REQUEST FOR TRACKING# $TRACKID failed (try $try/$MAX_TRIES) with ", $res->status_line, "\n";
+             sleep (5 ** $try);
          }
-         else {
-             print "HTTP REQUEST FOR TRACKING# $TRACKID failed with ", $res->status_line, "\n";
-         }
+         print "HTTP REQUEST FOR TRACKING# $TRACKID failed (tried $try times) with ", $res->status_line, "\n";
+	 close $RAW;
+	 unlink $tmpfile;
 }
 
 # outputs oneline last status of package
