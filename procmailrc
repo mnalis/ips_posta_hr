@@ -1,7 +1,3 @@
 :0 bhwc:extract_tracking_number
-* ^FROM.*dealextreme
-| extract_tracking_number
-
-:0 bhwc:extract_tracking_number
-* ^FROM.*ebay
+* ^FROM.*(dealextreme|ebay|aliexpress)
 | extract_tracking_number

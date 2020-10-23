@@ -56,7 +56,7 @@ sub get_pretty_metadata($)
         my $pretty = "$trackid";
         
         # simplify email to just important domain name
-        $$meta{'sender'} =~ s/^.*\@(.+?)\.(com|net|org|cn)$/$1/ if $$meta{'sender'};
+        $$meta{'sender'} =~ s/^.*\@(.+?)\.(com|net|org|cn|hk)$/$1/ if $$meta{'sender'};
         
         $pretty .= " <$$meta{'sender'}>" if $$meta{'sender'};
         $pretty .= " [$$meta{'desc'}]" if $$meta{'desc'};
