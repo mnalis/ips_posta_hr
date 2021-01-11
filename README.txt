@@ -1,4 +1,5 @@
-Auto e-mail tracking posiljaka preko https://tnt.posta.hr, kratke upute za instalaciju i koristenje
+Auto e-mail tracking posiljaka preko https://posiljka.posta.hr
+(bivsi `tnt.posta.hr`, bivsi `ips.posta.hr`), kratke upute za instalaciju i koristenje
 
 by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches welcome.
 
