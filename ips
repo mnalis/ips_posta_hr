@@ -8,7 +8,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.42 ';
+my $AGENT_ID='check_ips/0.43 ';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -135,7 +135,7 @@ sub request_package_status($)
          open my $RAW, '>', $tmpfile or die "can't create $tmpfile: $!";
          
          # Create a request
-         my $req = HTTP::Request->new(GET => "https://tnt.posta.hr/hptnt/index.xhtml?tntnumber=$TRACKID");
+         my $req = HTTP::Request->new(GET => "https://posiljka.posta.hr/Tracking/Details?tracklng=en&Barcode=$TRACKID");
 
 	 my $MAX_TRIES = 3;
 	 my $try = 0;
