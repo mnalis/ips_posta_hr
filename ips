@@ -9,7 +9,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.50 (like wget)';
+my $AGENT_ID='check_ips/0.51 (like wget)';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -181,7 +181,8 @@ sub print_last_status($)
          open my $PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
          while (<$PARSED>) {
                chomp;
-               if (/Pošiljka uručena primatelju/i) {
+               $DEBUG > 9 && print "Testing finished delivery in line: $_\n";
+               if (/ena primatelju/i) {
 		        print "Package delivery DETECTED\n" if $DEBUG > 0;
 			$delivered=1;
                }
