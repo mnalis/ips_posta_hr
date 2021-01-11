@@ -9,7 +9,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.51 (like wget)';
+my $AGENT_ID='check_ips/0.52 (like wget)';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -56,7 +56,7 @@ sub get_pretty_metadata($)
         my $meta = get_metadata($trackid);
         my $pretty = "$trackid";
         
-        print "raw sender=$$meta{'sender'}\n" if $DEBUG > 1;
+        print $$meta{'sender'} ? "raw sender=$$meta{'sender'}\n" : "no sender defined\n" if $DEBUG > 1;
 
         # simplify email to just important part of domain name
         $$meta{'sender'} =~ s/^.*\@.*?([^.]+)(\.com)?\.\w{2,4}$/$1/ if $$meta{'sender'};
@@ -92,13 +92,17 @@ sub parse_raw_html($)
          my $parsed_ok=0;
 	 my $parsed_nodata=0;
 	 # JSON array "results": lokacija / status / vrijeme / datum
-         foreach my $row (@{$$table{'results'}}) {
+	 my @rows = @{$$table{'results'}};
+	 $DEBUG > 2 && print "rows=$#rows\n";
+	 if ($#rows == -1) { $parsed_nodata++ } else {
+           foreach my $row (@rows) {
                 $DEBUG > 8 && print "RED=", Dumper ($row);
                 my $line = join(',', ($$row{'datum'} .' ' . $$row{'vrijeme'}, $$row{'lokacija'}, $$row{'status'}));
                 $DEBUG && print "    x $line\n";
                 print $TXT "$line\n" or die "can't write to $newfile: $!";
 		$parsed_nodata++ if $line =~ m{nema podataka}i;
                 $parsed_ok++ if $line =~ m{^\d+[/\.]\d+[/\.]\d+\.? \d+:\d+:\d+};
+           }
          }
          close ($TXT) or die "can't write-close $newfile: $!";
          if ($parsed_nodata) {
