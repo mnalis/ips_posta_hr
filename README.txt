@@ -8,7 +8,7 @@ by Matija Nalis <mnalis-perl@voyager.hr> released under GPLv3+ license. Patches 
 	git clone https://github.com/mnalis/ips_posta_hr.git
 	cd ips_posta_hr
 	sudo make install
-        sudo apt-get install perl libhtml-tableextract-perl
+        sudo apt-get install perl libjson-perl
 	mkdir ~/.ips_posta_hr
 
 2) dodaj automatske obavijesti e-mailom i automatsko praznjenje kada posiljke stignu 
