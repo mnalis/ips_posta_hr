@@ -1,14 +1,17 @@
 #!/usr/bin/perl -wT
 # Matija Nalis <mnalis-perl@voyager.hr> started 2010-11-18, GPLv3+
 # prints any changes to packages status on tnt.posta.ht (2019+)
+# prints any changes to packages status on posiljka.posta.hr (01/2021+)
+# prints any changes to packages status on tnt.posta.ht (05/2021+)
 
 use strict;
+use open qw/:std :utf8/;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.42 ';
+my $AGENT_ID='check_ips/0.60 (like wget)';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -55,7 +58,7 @@ sub get_pretty_metadata($)
         my $meta = get_metadata($trackid);
         my $pretty = "$trackid";
         
-        print "raw sender=$$meta{'sender'}\n" if $DEBUG > 1;
+        print $$meta{'sender'} ? "raw sender=$$meta{'sender'}\n" : "no sender defined\n" if $DEBUG > 1;
 
         # simplify email to just important part of domain name
         $$meta{'sender'} =~ s/^.*\@.*?([^.]+)(\.com)?\.\w{2,4}$/$1/ if $$meta{'sender'};
@@ -135,7 +138,9 @@ sub request_package_status($)
          open my $RAW, '>', $tmpfile or die "can't create $tmpfile: $!";
          
          # Create a request
-         my $req = HTTP::Request->new(GET => "https://tnt.posta.hr/hptnt/index.xhtml?tntnumber=$TRACKID");
+         my $url = "https://tnt.posta.hr/hptnt/index.xhtml?tntnumber=$TRACKID";
+         $DEBUG > 1 && print "Requesting URL: $url\n";
+         my $req = HTTP::Request->new(GET => $url);
 
 	 my $MAX_TRIES = 3;
 	 my $try = 0;
@@ -174,7 +179,8 @@ sub print_last_status($)
          open my $PARSED, '<', $parsedfile or die "can't open parsed file $parsedfile: $!";
          while (<$PARSED>) {
                chomp;
-               if (/Pošiljka uručena primatelju/i) {
+               $DEBUG > 9 && print "Testing finished delivery in line: $_\n";
+               if (/ena primatelju/i) {
 		        print "Package delivery DETECTED\n" if $DEBUG > 0;
 			$delivered=1;
                }
