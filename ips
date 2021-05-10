@@ -11,7 +11,7 @@ my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.60 (like wget)';
+my $AGENT_ID='check_ips/0.61 (like wget)';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
@@ -29,6 +29,17 @@ my $changes = 0;
 
 my $ua = LWP::UserAgent->new;
 $ua->agent($AGENT_ID);
+
+# we only ever connect to tnt.posta.hr which no longer have DNS entry, so override it globally here
+my $peer_addr = '195.182.46.5';
+my $peer_host = 'tnt.posta.hr';
+@LWP::Protocol::http::EXTRA_SOCK_OPTS =  (
+            PeerAddr          => $peer_addr,
+            Host              => $peer_host,
+            SSL_verifycn_name => $peer_host,
+            SSL_hostname      => $peer_host, # for SNI
+        );
+$DEBUG > 9 && print "Overriding socket IP: " . join (' => ',  @LWP::Protocol::http::EXTRA_SOCK_OPTS) . "\n";
 
 # parses HTML file on disk
 sub get_metadata($)
