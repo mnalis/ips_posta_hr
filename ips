@@ -5,13 +5,13 @@
 # prints any changes to packages status on tnt.posta.ht (05/2021+)
 
 use strict;
-use open qw/:std :utf8/;
+#use open qw/:std :utf8/;
 
 my $DEBUG=$ENV{'DEBUG'} || 0;
 my $HOME=$ENV{'HOME'} or die "HOME directory not defined";
 if ($HOME =~ m{^(/home/\w+(\w+|\w\.\w|\w/)+)$}) { $HOME = $1 } else { die "invalid chars in homedir $HOME"; }
 my $SPOOL_DIR=$HOME . '/.ips_posta_hr';
-my $AGENT_ID='check_ips/0.61 (like wget)';
+my $AGENT_ID='check_ips/0.62 (like wget)';
 
 $ENV{'PATH'}='/usr/local/bin:/usr/bin:/bin';
 umask 002;
